@@ -1,0 +1,23 @@
+{
+  "name": "eval2",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "test": "jest",
+    "start": "node src/server.js"
+  },
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "eslint": "^4.17.0",
+    "hapi": "^16.6.2",
+    "sequelize": "^4.33.1"
+  },
+  "devDependencies": {
+    "eslint-config-airbnb-base": "^12.1.0",
+    "eslint-plugin-import": "^2.8.0",
+    "jest": "^22.2.1",
+    "sequelize-cli": "^3.2.0"
+  }
+}
