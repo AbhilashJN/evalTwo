@@ -1,8 +1,16 @@
 const Server = require('../../src/server');
-
+const Models = require('../../models');
 
 describe('Testing response of server', () => {
-  test('Testing response of server,should return Created', (done) => {
+  beforeAll((done) => {
+    Models.likes.destroy({ truncate: true }).then(() => {
+      Models.likes.create({ bookid: 4, status: 'liked' }).then(() => { done(); });
+    });
+  });
+  afterAll((done) => {
+    Models.likes.destroy({ truncate: true }).then(() => { done(); });
+  });
+  test('Testing for new book,should return Created', (done) => {
     const options = {
       method: 'POST',
       url: '/dislikes',
@@ -11,11 +19,11 @@ describe('Testing response of server', () => {
       },
     };
     Server.inject(options, (result) => {
-      expect(result.payload).toMatch('Stored');
+      expect(result.payload).toMatch('Created');
       done();
     });
   });
-  test('Testing response of server,should return Stored', (done) => {
+  test('Testing previously liked book,should return Stored', (done) => {
     const options = {
       method: 'POST',
       url: '/dislikes',
@@ -25,6 +33,19 @@ describe('Testing response of server', () => {
     };
     Server.inject(options, (result) => {
       expect(result.payload).toMatch('Stored');
+      done();
+    });
+  });
+  test('Testing invalid book id,should return Invalid book ID', (done) => {
+    const options = {
+      method: 'POST',
+      url: '/dislikes',
+      payload: {
+        bookid: 666,
+      },
+    };
+    Server.inject(options, (result) => {
+      expect(result.payload).toMatch('Invalid book ID');
       done();
     });
   });
