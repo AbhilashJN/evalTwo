@@ -95,6 +95,7 @@ describe('Testing response of server', () => {
       url: '/books',
     };
     Server.inject(options, (response) => {
+      console.log(response.result);
       expect(response.result).not.toEqual([]);
       done();
     });

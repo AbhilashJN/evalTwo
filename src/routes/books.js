@@ -24,6 +24,7 @@ const mergeRatingsWithBooks = (allBooksArray, ratingsArray) => {
 };
 
 const groupByAuthor = (booksWithRatings) => {
+  console.log(booksWithRatings);
   const booksGroupedByAuthor = booksWithRatings.reduce((acc, current) => {
     acc[current.Author] = acc[current.Author] || [];
     acc[current.Author].push(current);
@@ -74,8 +75,25 @@ module.exports = [
           modifiedObj.rating = book.rating;
           modifiedArray.push(modifiedObj);
         });
-        Models.books.destroy({ truncate: true });
+        Models.books.destroy({ truncate: true, restartIdentity: true });
         Models.books.bulkCreate(modifiedArray).then(response);
+      });
+    },
+  },
+
+  {
+    path: '/getbooks',
+    method: 'GET',
+    handler: (request, response) => {
+      const booksWithRatings = Models.books.findAndCountAll({ attributes: [['bookid', 'id'], 'rating', ['name', 'Name'], ['author', 'Author']] });
+
+      booksWithRatings.then(value => (value.rows)).then((rows) => {
+        const dbBooksArray = rows.map(book =>
+          // console.log(book.dataValues);
+          book.dataValues);
+        const grouped = groupByAuthor(dbBooksArray);
+        console.log('grouped:', grouped);
+        response(grouped);
       });
     },
   },
