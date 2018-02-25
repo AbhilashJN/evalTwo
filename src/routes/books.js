@@ -23,6 +23,17 @@ const mergeRatingsWithBooks = (allBooksArray, ratingsArray) => {
   return booksWithRatings;
 };
 
+const mergeLikesWithBooks = (allBooksArray, likesObj) => {
+  const booksWithLikes = allBooksArray.map((book, index) => {
+    const newBook = { ...book };
+    console.log('n::::::', newBook);
+    newBook.status = likesObj[newBook.id].status;
+    return newBook;
+  });
+  return booksWithLikes;
+};
+
+
 const groupByAuthor = (booksWithRatings) => {
   console.log(booksWithRatings);
   const booksGroupedByAuthor = booksWithRatings.reduce((acc, current) => {
@@ -67,6 +78,7 @@ module.exports = [
       const booksWithRatings = getBooksWithRatings();
       booksWithRatings.then((booksWithRatingsArray) => {
         const modifiedArray = [];
+        const likesArr = [];
         booksWithRatingsArray.forEach((book) => {
           const modifiedObj = {};
           modifiedObj.bookid = book.id;
@@ -74,9 +86,13 @@ module.exports = [
           modifiedObj.name = book.Name;
           modifiedObj.rating = book.rating;
           modifiedArray.push(modifiedObj);
+          likesArr.push({ bookid: book.id, status: 'notliked' });
         });
-        Models.books.destroy({ truncate: true, restartIdentity: true });
-        Models.books.bulkCreate(modifiedArray).then(response);
+        Models.books.destroy({ truncate: true, restartIdentity: true })
+          .then(() => Models.likes.destroy({ truncate: true, restartIdentity: true }))
+          .then(() => Models.books.bulkCreate(modifiedArray))
+          .then(() => Models.likes.bulkCreate(likesArr))
+          .then(response);
       });
     },
   },
@@ -86,15 +102,33 @@ module.exports = [
     method: 'GET',
     handler: (request, response) => {
       const booksWithRatings = Models.books.findAndCountAll({ attributes: [['bookid', 'id'], 'rating', ['name', 'Name'], ['author', 'Author']] });
-
       booksWithRatings.then(value => (value.rows)).then((rows) => {
         const dbBooksArray = rows.map(book =>
-          // console.log(book.dataValues);
           book.dataValues);
-        const grouped = groupByAuthor(dbBooksArray);
-        console.log('grouped:', grouped);
-        response(grouped);
-      });
+        return dbBooksArray;
+      })
+        .then((dbBooksArray) => {
+          Models.likes.findAndCountAll()
+            .then(value => value.rows)
+            .then((rows) => {
+              const dbLikesArray = rows.map(likeObj =>
+                likeObj.dataValues);
+              return dbLikesArray;
+            })
+            .then((dbLikesArray) => {
+              const sortedLikesObj = {};
+              for (let i = 0; i < dbLikesArray.length; i += 1) {
+                const currId = dbLikesArray[i].bookid;
+                const currBook = Object.assign({}, dbLikesArray[i]);
+                sortedLikesObj[currId] = currBook;
+              }
+              console.log(sortedLikesObj);
+              const merged = mergeLikesWithBooks(dbBooksArray, sortedLikesObj);
+              const grouped = groupByAuthor(merged);
+              console.log('grouped:', grouped);
+              response(grouped);
+            });
+        });
     },
   },
 ];
