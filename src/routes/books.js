@@ -89,10 +89,15 @@ module.exports = [
           likesArr.push({ bookid: book.id, status: 'notliked' });
         });
         Models.books.destroy({ truncate: true, restartIdentity: true })
-          .then(() => Models.likes.destroy({ truncate: true, restartIdentity: true }))
           .then(() => Models.books.bulkCreate(modifiedArray))
-          .then(() => Models.likes.bulkCreate(likesArr))
-          .then(response);
+          .then(() => Models.likes.findAndCountAll())
+          .then((counted) => {
+            if (counted.count > 0) {
+              response('books created');
+            } else {
+              Models.likes.bulkCreate(likesArr).then(response('books and likes created'));
+            }
+          });
       });
     },
   },

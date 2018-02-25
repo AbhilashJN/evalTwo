@@ -13,12 +13,13 @@ module.exports = [
         if (value === null) {
           response('Invalid book ID');
         }
-        Models.likes.update({ bookid: tbookid, status: 'liked' }, { where: { bookid: tbookid } })
-          .then((created) => {
-            if (created === true) {
-              response('Created');
+        Models.likes.update({ bookid: tbookid, status: 'liked' }, { where: { bookid: tbookid }, returning: true })
+          .then((updated) => {
+            if (updated[0] > 0) {
+              response(updated[1][0].status);
             } else {
-              response('liked');
+              Models.likes.create({ bookid: tbookid, status: 'liked' }, { returning: true })
+                .then((created) => { response(created.status); });
             }
           });
       });
